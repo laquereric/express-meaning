@@ -15,7 +15,8 @@ npm test           # 37 tests, no network required
 ## The spine: Input → Frame → Translation
 
 Those are the columns of the translation board in
-[`magentic-stack`](../magentic-stack), and they are this app's structure:
+[`magentic-stack`](https://github.com/laquereric/magentic-stack), and they are
+this app's structure:
 
 | column | here | property |
 |---|---|---|
@@ -70,7 +71,8 @@ prompt, with an instruction to give both readings rather than pick one.
 ## Where the frames come from
 
 Over CPCP, from magenticmarket.ai's live seam, using the
-[contract package](../coordination-protocol-contract-package) pattern:
+[contract package](https://github.com/laquereric/coordination-protocol-contract-package)
+pattern:
 
 ```
 GET  https://magenticmarket.ai/_cpcp/cid.json     → what the seam publishes
