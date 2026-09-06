@@ -1,10 +1,8 @@
-'use strict';
+import test from 'node:test';
+import assert from 'node:assert';
+import http from 'node:http';
 
-const test = require('node:test');
-const assert = require('node:assert');
-const http = require('node:http');
-
-const frames = require('../lib/contextframes');
+import * as frames from '../src/contextframes.js';
 
 function seam(handler) {
   return new Promise((resolve) => {

@@ -1,5 +1,3 @@
-'use strict';
-
 // The traditional half: a TODO list on a JSON file.
 //
 // No database, no ORM. The whole point of this half is that it is boring
@@ -9,10 +7,10 @@
 // Same never-raise discipline as the seam: every operation returns
 // { ok: true, ... } or { ok: false, reason, because }.
 
-const fs = require('node:fs');
-const path = require('node:path');
+import fs from 'node:fs';
+import path from 'node:path';
 
-const DEFAULT_PATH = path.join(__dirname, '..', 'data', 'todos.json');
+const DEFAULT_PATH = path.join(import.meta.dirname, '..', 'data', 'todos.json');
 const MAX_TITLE = 500;
 
 function refuse(reason, because) {
@@ -112,4 +110,4 @@ class TodoStore {
   }
 }
 
-module.exports = { TodoStore, DEFAULT_PATH, MAX_TITLE };
+export { TodoStore, DEFAULT_PATH, MAX_TITLE };

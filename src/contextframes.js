@@ -1,5 +1,3 @@
-'use strict';
-
 // The ContextFrame list.
 //
 // The frame this app reads is ContextFrame -> Meaning -> Clarification,
@@ -36,13 +34,13 @@
 // Nothing local is ever presented as upstream, and no code changes on
 // the day the seam publishes.
 
-const fs = require('node:fs');
-const path = require('node:path');
-const cpcp = require('./cpcp');
+import fs from 'node:fs';
+import path from 'node:path';
+import * as cpcp from './cpcp.js';
 
 const FRAME_METHOD = 'contextframe.list';
 const DEFAULT_ORIGIN = 'https://magenticmarket.ai/_cpcp';
-const LOCAL_PATH = path.join(__dirname, '..', 'data', 'contextframes.local.json');
+const LOCAL_PATH = path.join(import.meta.dirname, '..', 'data', 'contextframes.local.json');
 const CF = 'https://w3id.org/cpcp/osi8/contextframe#';
 
 /** Read a property under either its cf: prefixed name or its bare one. */
@@ -242,7 +240,7 @@ async function load({ origin = DEFAULT_ORIGIN, localPath = LOCAL_PATH, timeoutMs
   return { ok: true, frames: local, provenance };
 }
 
-module.exports = {
+export {
   load,
   readLocal,
   coerceFrame,

@@ -1,17 +1,18 @@
 {
   "name": "express-meaning",
   "version": "0.1.0",
+  "description": "A TODO list read through a ContextFrame from magenticmarket.ai over CPCP, composed into a prompt for Chrome AI Mode.",
+  "type": "module",
+  "license": "Apache-2.0",
   "private": true,
-  "description": "A TODO list that reads Meanings from magenticmarket.ai over CPCP, and composes both into a prompt you paste into Chrome AI Mode.",
-  "type": "commonjs",
   "main": "server.js",
   "engines": {
-    "node": ">=18"
+    "node": ">=20.11"
   },
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "test": "node --test test/"
+    "test": "node --test tests/cpcp.test.js tests/contextframes.test.js tests/prompt.test.js tests/todos.test.js"
   },
   "dependencies": {
     "express": "^5.1.0"

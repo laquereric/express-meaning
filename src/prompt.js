@@ -1,5 +1,3 @@
-'use strict';
-
 // Compose the Input (todos) and one ContextFrame into the Translation:
 // a prompt a person pastes into Chrome's AI Mode.
 //
@@ -161,4 +159,4 @@ function provenanceLine(frame, provenance, stamp) {
   return `ContextFrame ${frame.canonicalId} "${frame.title}" ${where}. Composed ${stamp} by express-meaning.`;
 }
 
-module.exports = { compose, provenanceLine, renderMeaning };
+export { compose, provenanceLine, renderMeaning };

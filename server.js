@@ -1,5 +1,3 @@
-'use strict';
-
 // express-meaning
 //
 // Input  -- a traditional TODO list, frame-independent.
@@ -12,12 +10,13 @@
 // speaks, and a client that only has to learn one shape is a client that
 // handles failure by default.
 
-const path = require('node:path');
-const express = require('express');
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import express from 'express';
 
-const frames = require('./lib/contextframes');
-const { TodoStore } = require('./lib/todos');
-const { compose } = require('./lib/prompt');
+import * as frames from './src/contextframes.js';
+import { TodoStore } from './src/todos.js';
+import { compose } from './src/prompt.js';
 
 const PORT = Number(process.env.PORT || 3200);
 const HOST = process.env.HOST || '127.0.0.1';
@@ -43,7 +42,7 @@ async function frameList({ refresh = false } = {}) {
 function build() {
   const app = express();
   app.use(express.json({ limit: '256kb' }));
-  app.use(express.static(path.join(__dirname, 'public')));
+  app.use(express.static(path.join(import.meta.dirname, 'public')));
 
   // A malformed JSON body is a parse refusal, not a stack trace. This has
   // to sit right after the parser to catch its throw.
@@ -129,11 +128,13 @@ function build() {
   return app;
 }
 
-if (require.main === module) {
+// Run the server only when this file IS the entry point, so tests can
+// import build() without binding a port.
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   build().listen(PORT, HOST, () => {
     console.log(`express-meaning on http://${HOST}:${PORT}`);
     console.log(`ContextFrames from ${ORIGIN} (method ${frames.FRAME_METHOD})`);
   });
 }
 
-module.exports = { build };
+export { build };

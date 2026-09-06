@@ -1,9 +1,7 @@
-'use strict';
+import test from 'node:test';
+import assert from 'node:assert';
 
-const test = require('node:test');
-const assert = require('node:assert');
-
-const { compose } = require('../lib/prompt');
+import { compose } from '../src/prompt.js';
 
 const FRAME = {
   canonicalId: 'F1',

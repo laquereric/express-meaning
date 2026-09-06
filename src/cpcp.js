@@ -1,5 +1,3 @@
-'use strict';
-
 // A CPCP client, in the magentic-stack pattern.
 //
 // Three rules carry over from the contract package
@@ -137,4 +135,4 @@ async function pull(baseUrl, method, params = {}, { timeoutMs = DEFAULT_TIMEOUT_
   return { ...normalize(envelope), http };
 }
 
-module.exports = { discover, pull, normalize, refuse, DEFAULT_TIMEOUT_MS };
+export { discover, pull, normalize, refuse, DEFAULT_TIMEOUT_MS };

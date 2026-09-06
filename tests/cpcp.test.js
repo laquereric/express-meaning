@@ -1,10 +1,8 @@
-'use strict';
+import test from 'node:test';
+import assert from 'node:assert';
+import http from 'node:http';
 
-const test = require('node:test');
-const assert = require('node:assert');
-const http = require('node:http');
-
-const cpcp = require('../lib/cpcp');
+import * as cpcp from '../src/cpcp.js';
 
 /** Stand up a throwaway seam that answers exactly what a case needs. */
 function seam(handler) {
@@ -117,5 +115,3 @@ test('a success envelope passes through with its result', async () => {
   assert.deepEqual(out.result['@graph'], [1, 2]);
   await s.close();
 });
-
-module.exports = { seam, json };

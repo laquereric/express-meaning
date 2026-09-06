@@ -1,12 +1,10 @@
-'use strict';
+import test from 'node:test';
+import assert from 'node:assert';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
-const test = require('node:test');
-const assert = require('node:assert');
-const fs = require('node:fs');
-const os = require('node:os');
-const path = require('node:path');
-
-const { TodoStore, MAX_TITLE } = require('../lib/todos');
+import { TodoStore, MAX_TITLE } from '../src/todos.js';
 
 function tempStore() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'express-meaning-'));

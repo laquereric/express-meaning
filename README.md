@@ -117,7 +117,7 @@ No exceptions cross a boundary. `Dry::Monads`-style wrappers are not used, and
 neither is `throw`. The browser client therefore has exactly one failure path:
 read `ok`, show `reason` and `because`.
 
-The CPCP client (`lib/cpcp.js`) handles three things a naive client gets wrong:
+The CPCP client (`src/cpcp.js`) handles three things a naive client gets wrong:
 
 * **Both refusal shapes.** Refusals arrive nested (`error.reason`) *and* flat
   (top-level `reason`). Both are live upstream and deliberately not unified, so
@@ -141,14 +141,19 @@ vendor.
 
 ```
 server.js                        Express routes; every answer an envelope
-lib/cpcp.js                      the CPCP client — never raises
-lib/contextframes.js             CID discovery, coercion, provenance, fallback
-lib/prompt.js                    Input + Frame → Translation
-lib/todos.js                     the boring half, on a JSON file
+src/cpcp.js                      the CPCP client — never raises
+src/contextframes.js             CID discovery, coercion, provenance, fallback
+src/prompt.js                    Input + Frame → Translation
+src/todos.js                     the boring half, on a JSON file
 data/contextframes.local.json    labelled local fallback
 public/                          vanilla JS, no framework, no build
-test/                            37 tests, all offline
+tests/                           37 tests, all offline
 ```
+
+ESM throughout (`"type": "module"`), Node ≥ 20.11, Apache-2.0 — matching the
+conventions of the other JavaScript projects in this ecosystem. There is no
+gemspec and no Gemfile entry: this is a JavaScript project, and `gems/` is for
+Ruby gems.
 
 ## Configuration
 
