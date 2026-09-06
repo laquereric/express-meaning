@@ -1,5 +1,7 @@
 # express-meaning
 
+[![gate-tests](https://github.com/laquereric/express-meaning/actions/workflows/test.yml/badge.svg)](https://github.com/laquereric/express-meaning/actions/workflows/test.yml)
+
 A traditional TODO list, and one **ContextFrame** to read it through.
 
 Express 5, vanilla JavaScript, no build step. One runtime dependency.
