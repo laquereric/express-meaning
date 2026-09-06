@@ -1,0 +1,165 @@
+{
+  "note": "Local fallback. NOT from magenticmarket.ai. The app labels these as local in the UI and in every generated prompt. When the upstream seam publishes contextframe.list, upstream wins and this file goes unread.",
+  "canonicalIdScope": "local to this installation; the board's Y1/Y2/Y3 are a different, external series and are not reused here",
+  "@context": {
+    "cf": "https://w3id.org/cpcp/osi8/contextframe#"
+  },
+  "@graph": [
+    {
+      "@type": "cf:ContextFrame",
+      "canonicalId": "F1",
+      "title": "Shipping",
+      "summary": "Read the list by what each item would prove, and how soon.",
+      "cf:meaning": [
+        {
+          "@type": "cf:Meaning",
+          "title": "Done means someone outside the work can use it",
+          "excerpt": "Not merged, not demoed — used. Until then the task is in progress under a different name.",
+          "acceptance": "accepted",
+          "dispute_open": false,
+          "cf:clarification": [
+            {
+              "@type": "cf:Clarification",
+              "title": "Internal users count",
+              "source": "team agreement",
+              "source_at": "2026-08-14"
+            }
+          ]
+        },
+        {
+          "@type": "cf:Meaning",
+          "title": "A task earns its place by what it would prove",
+          "excerpt": "The version that answers the open question soonest beats the version that is complete.",
+          "acceptance": "accepted",
+          "dispute_open": false
+        },
+        {
+          "@type": "cf:Meaning",
+          "title": "Shipping means deployed, not merged",
+          "excerpt": "Contested. Merging closes the authoring loop; only deploying closes the user's.",
+          "acceptance": "accepted",
+          "dispute_open": true,
+          "cf:clarification": [
+            {
+              "@type": "cf:Clarification",
+              "title": "Deploy is a separate gate with its own owner",
+              "source": "ops",
+              "source_at": "2026-08-20"
+            }
+          ]
+        },
+        {
+          "@type": "cf:Meaning",
+          "title": "Small means under a day",
+          "excerpt": "Machine-proposed from cycle times.",
+          "acceptance": "suggested",
+          "dispute_open": false
+        }
+      ]
+    },
+    {
+      "@type": "cf:ContextFrame",
+      "canonicalId": "F2",
+      "title": "Commitment",
+      "summary": "Read the list as promises made to named people.",
+      "cf:meaning": [
+        {
+          "@type": "cf:Meaning",
+          "title": "A task with no named person is not a commitment",
+          "excerpt": "It is an intention. Intentions do not have deadlines and should not be treated as though they do.",
+          "acceptance": "accepted",
+          "dispute_open": false
+        },
+        {
+          "@type": "cf:Meaning",
+          "title": "A late promise is worse than a withdrawn one",
+          "excerpt": "Withdrawing returns the decision to the other person while they can still act on it.",
+          "acceptance": "accepted",
+          "dispute_open": false,
+          "cf:clarification": [
+            {
+              "@type": "cf:Clarification",
+              "title": "Applies to dates given aloud, not only written ones",
+              "source": "retro",
+              "source_at": "2026-07-02"
+            }
+          ]
+        },
+        {
+          "@type": "cf:Meaning",
+          "title": "Silence reads as agreement",
+          "excerpt": "Machine-proposed from thread outcomes.",
+          "acceptance": "suggested",
+          "dispute_open": true
+        }
+      ]
+    },
+    {
+      "@type": "cf:ContextFrame",
+      "canonicalId": "F3",
+      "title": "Capacity",
+      "summary": "Read the list against the hours that actually exist, not the ones on the calendar.",
+      "cf:meaning": [
+        {
+          "@type": "cf:Meaning",
+          "title": "Some work only happens in unbroken stretches",
+          "excerpt": "An hour split in three is not an hour for this class of task; it is nothing.",
+          "acceptance": "accepted",
+          "dispute_open": false,
+          "cf:clarification": [
+            {
+              "@type": "cf:Clarification",
+              "title": "Two hours is the observed floor for the deep class",
+              "source": "time log",
+              "source_at": "2026-06-30"
+            }
+          ]
+        },
+        {
+          "@type": "cf:Meaning",
+          "title": "A list longer than the week is a backlog, not a plan",
+          "excerpt": "Calling it a plan makes every item feel late.",
+          "acceptance": "accepted",
+          "dispute_open": false
+        }
+      ]
+    },
+    {
+      "@type": "cf:ContextFrame",
+      "canonicalId": "F4",
+      "title": "Risk",
+      "summary": "Read the list by what fails without anyone noticing.",
+      "cf:meaning": [
+        {
+          "@type": "cf:Meaning",
+          "title": "Work is done when its failing is loud",
+          "excerpt": "Not when it works. Anything that can fail silently eventually will, and the cost lands far from here.",
+          "acceptance": "accepted",
+          "dispute_open": false
+        },
+        {
+          "@type": "cf:Meaning",
+          "title": "Reversible decisions deserve speed; irreversible ones deserve the time saved",
+          "excerpt": "Most of the list is reversible and is being treated as though it is not.",
+          "acceptance": "accepted",
+          "dispute_open": false,
+          "cf:clarification": [
+            {
+              "@type": "cf:Clarification",
+              "title": "Anything touching customer data is treated as irreversible",
+              "source": "policy",
+              "source_at": "2026-05-11"
+            }
+          ]
+        },
+        {
+          "@type": "cf:Meaning",
+          "title": "An unowned task is an outage waiting for a date",
+          "excerpt": "Machine-proposed from incident history.",
+          "acceptance": "suggested",
+          "dispute_open": false
+        }
+      ]
+    }
+  ]
+}

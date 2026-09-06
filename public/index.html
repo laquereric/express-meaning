@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>express-meaning</title>
+    <!-- Inline so the page makes no request the CSP or an offline run could fail. -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ctext y='13' font-size='13'%3E%E2%97%88%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header class="masthead">
+      <h1>express&#8209;meaning</h1>
+      <p class="sub">
+        A list of things to do, and one frame to read them through.
+        <span class="spine">Input &rarr; Frame &rarr; Translation</span>
+      </p>
+    </header>
+
+    <main class="columns">
+      <!-- ---------------- Input ---------------- -->
+      <section class="panel" aria-labelledby="todos-heading">
+        <div class="panel-head">
+          <div>
+            <h2 id="todos-heading">Todos</h2>
+            <p class="panel-note">The Input. Frame&#8209;independent &mdash; picking a frame changes nothing here.</p>
+          </div>
+          <span class="count" id="todo-count" aria-live="polite"></span>
+        </div>
+
+        <form id="todo-form" class="add-row" autocomplete="off">
+          <label class="visually-hidden" for="todo-title">New todo</label>
+          <input id="todo-title" name="title" type="text" placeholder="What needs doing?" maxlength="500" required />
+          <button type="submit">Add</button>
+        </form>
+
+        <ul id="todo-list" class="todo-list"></ul>
+        <p id="todo-empty" class="empty" hidden>Nothing here yet. Add the first one.</p>
+
+        <div class="panel-foot">
+          <button type="button" id="clear-done" class="linkish">Clear done</button>
+        </div>
+      </section>
+
+      <!-- ---------------- Frame ---------------- -->
+      <section class="panel" aria-labelledby="frames-heading">
+        <div class="panel-head">
+          <div>
+            <h2 id="frames-heading">Context frames</h2>
+            <p class="panel-note">
+              A read&#8209;time lens. Each frame contains its Meanings; each Meaning contains its Clarifications.
+            </p>
+          </div>
+          <button type="button" id="refresh-frames" class="linkish">Re&#8209;check seam</button>
+        </div>
+
+        <div id="provenance" class="provenance" aria-live="polite"></div>
+
+        <ul id="frame-list" class="frame-list"></ul>
+      </section>
+    </main>
+
+    <div class="actions">
+      <button type="button" id="compose" disabled>Compose prompt</button>
+      <span id="compose-hint" class="hint">Select a frame to compose.</span>
+    </div>
+
+    <!-- ---------------- Translation ---------------- -->
+    <dialog id="prompt-modal" aria-labelledby="prompt-title">
+      <div class="modal-head">
+        <h2 id="prompt-title">Your prompt</h2>
+        <button type="button" id="close-modal" class="icon" aria-label="Close">&times;</button>
+      </div>
+
+      <p class="modal-sub">
+        Copy this, open Chrome&rsquo;s AI Mode, and paste it. Nothing is sent from here &mdash; this app holds no key
+        and calls no model.
+      </p>
+
+      <pre id="prompt-text" class="prompt" tabindex="0"></pre>
+
+      <div class="modal-foot">
+        <button type="button" id="copy-prompt">Copy</button>
+        <a
+          href="https://www.google.com/search?udm=50"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="button-ish"
+          >Open Chrome AI Mode &#8599;</a
+        >
+        <span id="copy-status" class="hint" role="status" aria-live="polite"></span>
+      </div>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

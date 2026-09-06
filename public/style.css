@@ -1,0 +1,491 @@
+/* express-meaning — no framework, no build step. */
+
+:root {
+  --bg: #fbfaf8;
+  --panel: #ffffff;
+  --ink: #1b1a17;
+  --muted: #6b675f;
+  --line: #e4e0d8;
+  --accent: #2f5d50;
+  --accent-soft: #e8f0ec;
+  --warn: #8a5a1c;
+  --warn-soft: #fbf1e0;
+  --bad: #8c2f2a;
+  --radius: 10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14161a;
+    --panel: #1c1f25;
+    --ink: #e9e7e2;
+    --muted: #9b968c;
+    --line: #2c3038;
+    --accent: #7fbfa8;
+    --accent-soft: #1d2a26;
+    --warn: #d7a969;
+    --warn-soft: #2a2419;
+    --bad: #e08a84;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 2rem 1.25rem 5rem;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.55 ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
+}
+
+/* ---------------------------------------------------------- masthead */
+
+.masthead {
+  max-width: 1100px;
+  margin: 0 auto 1.75rem;
+}
+
+.masthead h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  letter-spacing: -0.02em;
+}
+
+.sub {
+  margin: 0.3rem 0 0;
+  color: var(--muted);
+}
+
+.spine {
+  display: inline-block;
+  margin-left: 0.6rem;
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* ---------------------------------------------------------- layout */
+
+.columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.2rem 0.9rem;
+}
+
+.panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+
+.panel-head h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.panel-note {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+  max-width: 34ch;
+}
+
+.count {
+  font-size: 0.8rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.panel-foot {
+  border-top: 1px solid var(--line);
+  margin-top: 0.9rem;
+  padding-top: 0.6rem;
+}
+
+/* ---------------------------------------------------------- controls */
+
+button,
+.button-ish {
+  font: inherit;
+  padding: 0.45rem 0.9rem;
+  border-radius: 7px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--bg);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+button.linkish {
+  background: none;
+  border: none;
+  color: var(--accent);
+  padding: 0;
+  font-size: 0.82rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+button.icon {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.15rem;
+  line-height: 1;
+  padding: 0 0.3rem;
+}
+
+button.icon:hover {
+  color: var(--bad);
+}
+
+input[type="text"] {
+  font: inherit;
+  flex: 1;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.add-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+}
+
+/* ---------------------------------------------------------- todos */
+
+.todo-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.todo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.todo:last-child {
+  border-bottom: none;
+}
+
+.todo label {
+  flex: 1;
+  cursor: pointer;
+}
+
+.todo.done label {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.empty {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+/* ---------------------------------------------------------- provenance */
+
+.provenance {
+  border: 1px solid var(--line);
+  border-left-width: 3px;
+  border-radius: 7px;
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 0.82rem;
+  background: var(--bg);
+}
+
+.provenance.upstream {
+  border-left-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.provenance.local {
+  border-left-color: var(--warn);
+  background: var(--warn-soft);
+}
+
+.provenance.bad {
+  border-left-color: var(--bad);
+  color: var(--bad);
+}
+
+.prov-line .dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 0.45rem;
+  background: currentColor;
+}
+
+.provenance details {
+  margin-top: 0.45rem;
+  color: var(--muted);
+}
+
+.provenance summary {
+  cursor: pointer;
+}
+
+.provenance p {
+  margin: 0.35rem 0 0;
+}
+
+.provenance .ops {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+}
+
+/* ---------------------------------------------------------- frames */
+
+.frame-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.frame {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.7rem 0.8rem;
+  margin-bottom: 0.75rem;
+}
+
+.frame:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.frame-head {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.canonical-id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.72rem;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  color: var(--accent);
+}
+
+.frame-summary {
+  margin: 0.4rem 0 0.6rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.meaning-section {
+  margin-top: 0.5rem;
+}
+
+.section-heading {
+  margin: 0 0 0.3rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.meaning-section.suggested .section-heading {
+  color: var(--warn);
+}
+
+.meanings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.meaning {
+  padding: 0.3rem 0 0.3rem 0.65rem;
+  border-left: 2px solid var(--line);
+  margin-bottom: 0.35rem;
+  font-size: 0.88rem;
+}
+
+.meaning-section.suggested .meaning {
+  border-left-style: dashed;
+  border-left-color: var(--warn);
+}
+
+.meaning.disputed {
+  border-left-color: var(--warn);
+}
+
+.meaning-head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.tag {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.05rem 0.35rem;
+  border-radius: 4px;
+  background: var(--warn-soft);
+  color: var(--warn);
+  border: 1px solid var(--warn);
+}
+
+.excerpt {
+  margin: 0.15rem 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.clarifications {
+  list-style: none;
+  margin: 0.3rem 0 0;
+  padding: 0 0 0 0.8rem;
+  border-left: 1px dotted var(--line);
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.clarifications li::before {
+  content: "· ";
+}
+
+/* ---------------------------------------------------------- actions */
+
+.actions {
+  max-width: 1100px;
+  margin: 1.5rem auto 0;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* ---------------------------------------------------------- modal */
+
+dialog {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.2rem;
+  max-width: min(760px, 92vw);
+  width: 100%;
+  background: var(--panel);
+  color: var(--ink);
+}
+
+dialog::backdrop {
+  background: rgb(0 0 0 / 45%);
+}
+
+.modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-head h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.modal-sub {
+  margin: 0.3rem 0 0.8rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.prompt {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 0.85rem;
+  max-height: 52vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.modal-foot {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-top: 0.9rem;
+  flex-wrap: wrap;
+}
+
+/* ---------------------------------------------------------- toast */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: var(--bg);
+  padding: 0.6rem 1rem;
+  border-radius: 7px;
+  font-size: 0.86rem;
+  max-width: 90vw;
+}
+
+.toast.bad {
+  background: var(--bad);
+  color: #fff;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
