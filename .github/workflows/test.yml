@@ -1,0 +1,97 @@
+# Gate - the suite, plus proof the app actually boots.
+#
+# Part 1: the 37-test suite. Every test is offline: the CPCP cases stand up
+#         throwaway loopback seams, so nothing here depends on
+#         magenticmarket.ai being reachable from a runner.
+# Part 2: a boot smoke test the unit tests cannot cover -- the ESM entry-point
+#         check, static file serving from import.meta.dirname, and the
+#         fallback path when the seam is unreachable. Pointed at a dead
+#         origin on purpose: the app must still serve a labelled local
+#         ContextFrame list rather than fail or, worse, present local data
+#         as upstream.
+#
+# The matrix pins the floor declared in package.json engines (>=20.11, the
+# Node that has import.meta.dirname) alongside current LTS, so the floor is
+# verified rather than asserted.
+name: gate-tests
+on:
+  push: { branches: [ main ] }
+  pull_request:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [ '20.11', 'lts/*' ]
+    name: node ${{ matrix.node }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: 'Part 1 - test suite (offline)'
+        run: npm test
+
+      - name: 'Part 2 - boots, serves, and falls back without the seam'
+        env:
+          PORT: '3299'
+          # Nothing listens on port 1; the seam is unreachable by construction.
+          CPCP_ORIGIN: 'http://127.0.0.1:1/_cpcp'
+          TODOS_PATH: '/tmp/ci-todos.json'
+        run: |
+          set -euo pipefail
+          node server.js & pid=$!
+          trap 'kill $pid 2>/dev/null || true' EXIT
+
+          for i in $(seq 1 30); do
+            curl -fsS "http://127.0.0.1:$PORT/" >/dev/null 2>&1 && break
+            sleep 0.5
+            if [ "$i" = 30 ]; then echo "server never came up"; exit 1; fi
+          done
+
+          echo "--- static assets ---"
+          curl -fsS "http://127.0.0.1:$PORT/" >/dev/null
+          curl -fsS "http://127.0.0.1:$PORT/app.js" >/dev/null
+          curl -fsS "http://127.0.0.1:$PORT/style.css" >/dev/null
+
+          echo "--- the API composes with the seam down ---"
+          curl -fsS -X POST "http://127.0.0.1:$PORT/api/todos" \
+            -H 'content-type: application/json' \
+            -d '{"title":"ci smoke"}' >/dev/null
+
+          curl -fsS "http://127.0.0.1:$PORT/api/contextframes" -o frames.json
+          curl -fsS -X POST "http://127.0.0.1:$PORT/api/prompt" \
+            -H 'content-type: application/json' \
+            -d '{"canonicalId":"F1"}' -o prompt.json
+
+          node --input-type=module -e '
+            import { readFileSync } from "node:fs";
+            const frames = JSON.parse(readFileSync("frames.json", "utf8"));
+            const prompt = JSON.parse(readFileSync("prompt.json", "utf8"));
+
+            const fail = (m) => { console.error("FAIL: " + m); process.exit(1); };
+
+            if (!frames.ok) fail("the frame list refused: " + frames.reason);
+            if (frames.provenance.source !== "local") fail("expected the local fallback with the seam down");
+            if (frames.provenance.upstream_refusal?.reason !== "unreachable") {
+              fail("expected an unreachable refusal, got " + JSON.stringify(frames.provenance.upstream_refusal));
+            }
+            if (!frames.frames.length) fail("the fallback served no frames");
+
+            if (!prompt.ok) fail("the prompt refused: " + prompt.reason);
+            // The artifact must never present a local frame as upstream.
+            if (!/served locally by express-meaning/.test(prompt.prompt)) {
+              fail("the prompt did not label its local provenance");
+            }
+            if (/served by http/.test(prompt.prompt)) fail("a local frame was labelled as upstream");
+
+            console.log("ok - " + frames.frames.length + " frames, labelled local, prompt composed");
+          '
