@@ -144,6 +144,7 @@ vendor.
 ## Layout
 
 ```
+.cpcp/                           what this repo calls, machine-readable
 server.js                        Express routes; every answer an envelope
 src/cpcp.js                      the CPCP client — never raises
 src/contextframes.js             CID discovery, coercion, provenance, fallback

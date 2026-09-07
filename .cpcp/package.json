@@ -1,0 +1,27 @@
+{
+  "kind": "cpcp-application",
+  "version": 1,
+  "name": "express-meaning",
+  "description": "A TODO list read through a ContextFrame. Calls magenticmarket.ai over CPCP for the frame list; serves no CPCP seam of its own.",
+  "contract": {
+    "repo": "https://github.com/laquereric/coordination-protocol-contract-package",
+    "rev": "010cf90965690aa8d285addde3eaf155d6114480",
+    "note": "The revision whose scope vocabulary this repo's manifests cite. Full SHA per repo-format rule 5."
+  },
+  "scopes": {
+    "source": "spec/scopes.md",
+    "definitions": "coordination-protocol-contract-package .cpcp/services/package.json#scope_definitions at 010cf90965690aa8d285addde3eaf155d6114480",
+    "manifests": {
+      "dependency": ".cpcp/dependency/package.json"
+    },
+    "note": "One manifest, and it is a calling one. This repo serves no CPCP seam at any scope and joins no pod network, so the other three scopes get no directory -- a directory asserts a relation, and three empty ones would assert three that do not hold."
+  },
+  "not_a_seam": {
+    "public/": "A browser UI. Static files, no RPC.",
+    "/api/todos, /api/contextframes, /api/prompt": "This app's own HTTP API, called only by its own page. It answers the never-raise envelope shape by choice -- one failure path for the client to learn -- but it is not JSON-RPC-LD, draws no /_cpcp route, publishes no CID, and nothing outside this repo calls it. Answering {ok, reason, because} does not make a surface a CPCP seam.",
+    "the LLM": "There is none. The app holds no key, names no model, and makes no outbound request on the prompt path; a person carries the prompt to Chrome AI Mode by hand. The only network call this app makes is the CPCP one declared under dependency."
+  },
+  "gates": {
+    ".github/workflows/test.yml": "Runs the suite offline, then boots the app against a dead CPCP_ORIGIN and asserts the fallback is labelled local -- that a frame served from disk is never presented as one served by the seam."
+  }
+}

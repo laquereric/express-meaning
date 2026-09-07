@@ -1,0 +1,29 @@
+{
+  "kind": "cpcp-scope",
+  "scope": "dependency",
+  "of": "express-meaning",
+  "definition": "A CID this repo calls, served elsewhere. Entries are not seams of this repo; the producer is somebody else's services scope.",
+  "source": "coordination-protocol-contract-package .cpcp/services/package.json#scope_definitions at 010cf90965690aa8d285addde3eaf155d6114480",
+  "depends_on": [
+    {
+      "producer": "https://magenticmarket.ai/_cpcp",
+      "cid": "https://magenticmarket.ai/_cpcp/cid.json",
+      "operations": [
+        "contextframe.list"
+      ],
+      "status": "unbuilt",
+      "because": "Measured 2026-09-07 against the live seam. GET /_cpcp/cid.json publishes exactly build.list, build.get and build.create. POST /_cpcp/rpc with method contextframe.list answers HTTP 200 and {\"ok\":false,\"error\":{\"reason\":\"unknown_operation\",\"because\":\"no CPCP operation \\\"contextframe.list\\\"\"}}. magentic-stack GAP107 records the ContextFrame/Meaning/Clarification frame as SHACL shapes and explicitly not a CPCP operation yet.",
+      "shape": "https://w3id.org/cpcp/osi8/contextframe#ContextFrame",
+      "shape_source": "magentic-stack gems/shapes-level-8/bundles/contextframe.shacl.ttl -- containment: a Meaning sits under a ContextFrame, a Clarification under a Meaning",
+      "expects": "A collection of ContextFrame, each with a canonicalId and title, Meanings nested under it and Clarifications nested under those. The client reads cf: prefixed and bare property names, and refuses a frame without a canonicalId rather than synthesising one.",
+      "on_refusal": "Falls back to data/contextframes.local.json and labels it local -- in the API response, in a banner, and in the footer of every generated prompt. Nothing local is ever presented as upstream.",
+      "caller": "src/contextframes.js",
+      "verified_by": "tests/contextframes.test.js -- one test stands up a seam that DOES publish contextframe.list and asserts provenance flips to upstream, so the day this status becomes published is a data change here, not a code change."
+    }
+  ],
+  "note": "The CID is read before the method is called, so this repo knows what the seam offers rather than inferring it from a failed call. That is what lets 'status' be a measurement rather than a guess.",
+  "invariants": [
+    "A frame served from the local file is never labelled as served by the producer.",
+    "This repo calls no other seam, and holds no credential for this one: the operations it depends on are unauthenticated reads."
+  ]
+}
