@@ -2,15 +2,55 @@
 
 [![gate-tests](https://github.com/laquereric/express-meaning/actions/workflows/test.yml/badge.svg)](https://github.com/laquereric/express-meaning/actions/workflows/test.yml)
 
-A traditional TODO list, and one **ContextFrame** to read it through.
+A traditional TODO list, and one **ContextFrame** to read it through — sliced
+into the three roles a CPCP unit deploys as.
 
-Express 5, vanilla JavaScript, no build step. One runtime dependency.
+Express 5, vanilla JavaScript, no build step. One runtime dependency; SQLite
+comes from `node:sqlite`, which is built in.
 
 ```bash
 npm install
-npm start          # http://127.0.0.1:3200
-npm test           # 37 tests, no network required
+npm test                 # 57 tests, no network required
+
+# one image, three roles -- each in its own terminal
+TODOS_DB=data/todos.sqlite3 npm run start:back      # :3200  the seam
+TODOS_DB=data/todos.sqlite3 npm run start:backjob   #        no ingress
+PORT=3201 BACK_CPCP_ORIGIN=http://127.0.0.1:3200/_cpcp npm run start:front
 ```
+
+## One image, three roles
+
+| `ROLE` | serves | holds |
+|---|---|---|
+| `back` | `/_cpcp/rpc`, `/_cpcp/cid.json` — the todo seam | the SQLite database |
+| `front` | the browser UI and its `/api/*` routes | **no database** |
+| `backjob` | nothing. No ingress. | reaps idempotency receipts |
+
+Same shape as a Rails deploy of this unit, deliberately: one build, three
+containers, distinguished by `ROLE`.
+
+### The split is the point
+
+FRONT used to call the todo store as a function, so nothing could stand between
+an intent and its effect. Every mutation now crosses a process boundary as a
+typed message, and four things became true **without anyone adding a policy
+layer**:
+
+| | |
+|---|---|
+| an intent is **named** before it is performed | `operationId` on every PUSH |
+| a retry is the **same write**, not a second one | receipts, in the same database |
+| a refusal is a **record**, not an exception | the never-raise envelope |
+| what the seam answers is **discoverable** | the CID |
+
+None of that is application logic. It is what the boundary *being there* makes
+true — which is why governance can arrive later without rewriting a single
+caller. FRONT imports no store and opens no database: it could not bypass the
+seam if it wanted to.
+
+The `/api/*` routes a browser calls look exactly as they did. Each is now a
+thin proxy making a CPCP call to BACK. The browser did not have to learn
+anything.
 
 ## The spine: Input → Frame → Translation
 
@@ -121,7 +161,9 @@ No exceptions cross a boundary. `Dry::Monads`-style wrappers are not used, and
 neither is `throw`. The browser client therefore has exactly one failure path:
 read `ok`, show `reason` and `because`.
 
-The CPCP client (`src/cpcp.js`) handles three things a naive client gets wrong:
+The client (`src/cpcp/front/client.js`) handles three things a naive one gets
+wrong — and the same code talks to both seams, this app's BACK and
+magenticmarket.ai, because a seam is a seam:
 
 * **Both refusal shapes.** Refusals arrive nested (`error.reason`) *and* flat
   (top-level `reason`). Both are live upstream and deliberately not unified, so
@@ -144,31 +186,56 @@ vendor.
 ## Layout
 
 ```
-.cpcp/                           what this repo calls, machine-readable
-server.js                        Express routes; every answer an envelope
-src/cpcp.js                      the CPCP client — never raises
+server.js                        ROLE=front|back|backjob; the three surfaces
+src/cpcp/                        PROTOCOL -- nothing here knows what a todo is
+  envelope.js                      ok / no / refuse / normalize
+  front/client.js                  discover, pull, push
+  back/seam.js                     register / dispatch / cid
+  back/receipts.js                 idempotency store, and its own table
+  backjob/reaper.js                reap receipts past their TTL
+src/projection.js                DOMAIN meets protocol: registers todo.*
+src/todos.js                     the todo store, on SQLite
+src/db.js                        the connection and the domain schema
 src/contextframes.js             CID discovery, coercion, provenance, fallback
-src/prompt.js                    Input + Frame → Translation
-src/todos.js                     the boring half, on a JSON file
-data/contextframes.local.json    labelled local fallback
+src/prompt.js                    Input + Frame -> Translation
 public/                          vanilla JS, no framework, no build
-tests/                           37 tests, all offline
+tests/                           57 tests, all offline
 ```
 
-ESM throughout (`"type": "module"`), Node ≥ 20.11, Apache-2.0 — matching the
-conventions of the other JavaScript projects in this ecosystem. There is no
-gemspec and no Gemfile entry: this is a JavaScript project, and `gems/` is for
-Ruby gems.
+**`src/cpcp/` is generic on purpose.** The seam knows nothing about todos:
+operations are *registered* by `src/projection.js`, the same way `rails-cpcp`
+separates its engine from the initializer that projects a resource. A second
+application replaces the projection and keeps the rest —
+`tests/seam-generic.test.js` proves it by registering invented `widget.*`
+operations into a reset registry and watching them inherit the envelope, the
+`operationId` requirement, receipt replay and the CID.
 
 ## Configuration
 
 | variable | default | |
 |---|---|---|
+| `ROLE` | `back` | `front`, `back` or `backjob` |
 | `PORT` | `3200` | |
 | `HOST` | `127.0.0.1` | loopback only by default |
-| `CPCP_ORIGIN` | `https://magenticmarket.ai/_cpcp` | point at a local seam to develop against one |
-| `FRAMES_CACHE_MS` | `60000` | *Re-check seam* in the UI bypasses it |
-| `TODOS_PATH` | `data/todos.json` | |
+| `TODOS_DB` | `data/todos.sqlite3` | BACK and BACKJOB share it; FRONT never opens it |
+| `BACK_CPCP_ORIGIN` | `http://127.0.0.1:$PORT/_cpcp` | where FRONT finds BACK |
+| `CPCP_BASE_IRI` | `http://127.0.0.1:3200` | the IRI the CID publishes |
+| `CPCP_ORIGIN` | `https://magenticmarket.ai/_cpcp` | the *frame* seam, not this app's |
+| `RECEIPT_TTL_HOURS` | `24` | past this a retry is a **new** write |
+| `BACKJOB_INTERVAL_MS` | `60000` | |
+| `SQLITE_BUSY_TIMEOUT_MS` | `5000` | see below |
+
+### Why there is a busy timeout
+
+Three roles open the same SQLite file, and on a **cold** start they open it at
+the same moment while the schema does not yet exist. Without a busy timeout
+SQLite returns `SQLITE_BUSY` instantly rather than waiting: six concurrent
+opens were measured at five failures and one success.
+
+It hid in the worst way — BACK usually won the race and looked healthy, so the
+app served requests while BACKJOB was already dead. A worker that dies on cold
+start and a worker with nothing to do print the same amount of nothing.
+`tests/todos.test.js` spawns six concurrent cold opens to keep it fixed.
 
 ## A terminology note
 

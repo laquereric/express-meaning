@@ -10,9 +10,10 @@
 #         ContextFrame list rather than fail or, worse, present local data
 #         as upstream.
 #
-# The matrix pins the floor declared in package.json engines (>=20.11, the
-# Node that has import.meta.dirname) alongside current LTS, so the floor is
-# verified rather than asserted.
+# The matrix pins the floor declared in package.json engines (>=22.5, the Node
+# that has node:sqlite) alongside current LTS, so the floor is verified rather
+# than asserted. It moved from 20.11 when todos went to SQLite -- a declared
+# floor nobody runs is a guess, and this one would have been wrong for a day.
 name: gate-tests
 on:
   push: { branches: [ main ] }
@@ -25,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: [ '20.11', 'lts/*' ]
+        node: [ '22.5', 'lts/*' ]
     name: node ${{ matrix.node }}
     steps:
       - uses: actions/checkout@v4
@@ -40,58 +41,74 @@ jobs:
       - name: 'Part 1 - test suite (offline)'
         run: npm test
 
-      - name: 'Part 2 - boots, serves, and falls back without the seam'
+      - name: 'Part 2 - the three roles, and the seam between them'
         env:
-          PORT: '3299'
-          # Nothing listens on port 1; the seam is unreachable by construction.
+          # Nothing listens on port 1; the frame seam is unreachable by
+          # construction, so the fallback path is exercised too.
           CPCP_ORIGIN: 'http://127.0.0.1:1/_cpcp'
-          TODOS_PATH: '/tmp/ci-todos.json'
+          TODOS_DB: '/tmp/ci-todos.sqlite3'
         run: |
           set -euo pipefail
-          node server.js & pid=$!
-          trap 'kill $pid 2>/dev/null || true' EXIT
+          rm -f "$TODOS_DB"*
+
+          ROLE=back PORT=3281 node server.js & back=$!
+          ROLE=backjob BACKJOB_INTERVAL_MS=2000 node server.js & job=$!
+          ROLE=front PORT=3282 BACK_CPCP_ORIGIN=http://127.0.0.1:3281/_cpcp node server.js & front=$!
+          trap 'kill $back $job $front 2>/dev/null || true' EXIT
 
           for i in $(seq 1 30); do
-            curl -fsS "http://127.0.0.1:$PORT/" >/dev/null 2>&1 && break
+            curl -fsS "http://127.0.0.1:3281/_cpcp/up" >/dev/null 2>&1 \
+              && curl -fsS "http://127.0.0.1:3282/" >/dev/null 2>&1 && break
             sleep 0.5
-            if [ "$i" = 30 ]; then echo "server never came up"; exit 1; fi
+            if [ "$i" = 30 ]; then echo "roles never came up"; exit 1; fi
           done
 
-          echo "--- static assets ---"
-          curl -fsS "http://127.0.0.1:$PORT/" >/dev/null
-          curl -fsS "http://127.0.0.1:$PORT/app.js" >/dev/null
-          curl -fsS "http://127.0.0.1:$PORT/style.css" >/dev/null
+          echo "--- BACK publishes a CID; FRONT serves the UI ---"
+          curl -fsS "http://127.0.0.1:3281/_cpcp/cid.json" -o cid.json
+          curl -fsS "http://127.0.0.1:3282/app.js" >/dev/null
+          curl -fsS "http://127.0.0.1:3282/style.css" >/dev/null
 
-          echo "--- the API composes with the seam down ---"
-          curl -fsS -X POST "http://127.0.0.1:$PORT/api/todos" \
-            -H 'content-type: application/json' \
-            -d '{"title":"ci smoke"}' >/dev/null
+          echo "--- the browser API crosses the seam ---"
+          curl -fsS -X POST "http://127.0.0.1:3282/api/todos" \
+            -H 'content-type: application/json' -d '{"title":"ci smoke"}' >/dev/null
+          curl -fsS "http://127.0.0.1:3282/api/todos" -o todos.json
+          curl -fsS "http://127.0.0.1:3282/api/contextframes" -o frames.json
+          curl -fsS -X POST "http://127.0.0.1:3282/api/prompt" \
+            -H 'content-type: application/json' -d '{"canonicalId":"F1"}' -o prompt.json
 
-          curl -fsS "http://127.0.0.1:$PORT/api/contextframes" -o frames.json
-          curl -fsS -X POST "http://127.0.0.1:$PORT/api/prompt" \
-            -H 'content-type: application/json' \
-            -d '{"canonicalId":"F1"}' -o prompt.json
+          echo "--- the same intent twice is one write ---"
+          for _ in 1 2; do
+            curl -fsS -X POST "http://127.0.0.1:3281/_cpcp/rpc" \
+              -H 'content-type: application/json' \
+              -d '{"jsonrpc":"2.0","id":1,"method":"todo.create","params":{"title":"once"},"operationId":"ci-intent"}' \
+              -o /dev/null
+          done
+          curl -fsS "http://127.0.0.1:3282/api/todos" -o after.json
 
           node --input-type=module -e '
             import { readFileSync } from "node:fs";
-            const frames = JSON.parse(readFileSync("frames.json", "utf8"));
-            const prompt = JSON.parse(readFileSync("prompt.json", "utf8"));
-
+            const j = (f) => JSON.parse(readFileSync(f, "utf8"));
             const fail = (m) => { console.error("FAIL: " + m); process.exit(1); };
 
-            if (!frames.ok) fail("the frame list refused: " + frames.reason);
-            if (frames.provenance.source !== "local") fail("expected the local fallback with the seam down");
-            if (frames.provenance.upstream_refusal?.reason !== "unreachable") {
-              fail("expected an unreachable refusal, got " + JSON.stringify(frames.provenance.upstream_refusal));
-            }
-            if (!frames.frames.length) fail("the fallback served no frames");
+            const cid = j("cid.json");
+            const ops = cid.operations.map((o) => o.name);
+            for (const want of ["todo.list", "todo.create", "todo.toggle", "todo.remove", "todo.clearDone"])
+              if (!ops.includes(want)) fail("the CID does not publish " + want);
+            if (cid.operations.find((o) => o.name === "todo.create").direction !== "PUSH")
+              fail("todo.create is not declared PUSH");
 
+            if (!j("todos.json").ok) fail("FRONT could not read todos across the seam");
+
+            const frames = j("frames.json");
+            if (frames.provenance.source !== "local") fail("expected the local frame fallback");
+            const prompt = j("prompt.json");
             if (!prompt.ok) fail("the prompt refused: " + prompt.reason);
-            // The artifact must never present a local frame as upstream.
-            if (!/served locally by express-meaning/.test(prompt.prompt)) {
+            if (!/served locally by express-meaning/.test(prompt.prompt))
               fail("the prompt did not label its local provenance");
-            }
-            if (/served by http/.test(prompt.prompt)) fail("a local frame was labelled as upstream");
 
-            console.log("ok - " + frames.frames.length + " frames, labelled local, prompt composed");
+            const titles = j("after.json").todos.map((t) => t.title);
+            const once = titles.filter((t) => t === "once").length;
+            if (once !== 1) fail("the replayed intent wrote " + once + " todos; a retry must be the same write");
+
+            console.log("ok - three roles, " + ops.length + " operations, replay is one write");
           '

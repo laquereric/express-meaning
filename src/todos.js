@@ -1,113 +1,82 @@
-// The traditional half: a TODO list on a JSON file.
+// The todo store, on SQLite.
 //
-// No database, no ORM. The whole point of this half is that it is boring
-// and obviously correct, so the interesting half (the seam) has something
-// real to be interesting about.
+// Same never-raise envelope as before: every operation returns { ok: true, ... }
+// or { ok: false, reason, because }. That did not change when the storage did,
+// which is the point of having had it -- the seam above this file was written
+// against the envelope, not against a JSON file, so swapping the store is a
+// change to one module.
 //
-// Same never-raise discipline as the seam: every operation returns
-// { ok: true, ... } or { ok: false, reason, because }.
+// This is the BACK's code. FRONT never imports it; FRONT calls the seam.
 
-import fs from 'node:fs';
-import path from 'node:path';
+import { db, nowIso } from './db.js';
 
-const DEFAULT_PATH = path.join(import.meta.dirname, '..', 'data', 'todos.json');
 const MAX_TITLE = 500;
 
-function refuse(reason, because) {
-  return { ok: false, reason, because };
+const refuse = (reason, because) => ({ ok: false, reason, because });
+
+// SQLite has no boolean. Converting at the edge means nothing above this file
+// has to know that, and `done` is a boolean everywhere a caller can see it.
+const row = (r) => (r ? { ...r, done: r.done === 1 } : r);
+
+function newId() {
+  return `t${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 }
 
-class TodoStore {
-  constructor(file = DEFAULT_PATH) {
-    this.file = file;
-  }
-
-  /** Read the file. A missing file is an empty list, not an error. */
-  read() {
-    try {
-      const parsed = JSON.parse(fs.readFileSync(this.file, 'utf8'));
-      return Array.isArray(parsed.todos) ? parsed.todos : [];
-    } catch (err) {
-      if (err && err.code === 'ENOENT') return [];
-      throw err;
-    }
-  }
-
-  /** Write via a temp file + rename so a crash mid-write cannot truncate. */
-  write(todos) {
-    const tmp = `${this.file}.tmp`;
-    fs.mkdirSync(path.dirname(this.file), { recursive: true });
-    fs.writeFileSync(tmp, `${JSON.stringify({ todos }, null, 2)}\n`, 'utf8');
-    fs.renameSync(tmp, this.file);
-    return todos;
-  }
-
-  list() {
-    try {
-      return { ok: true, todos: this.read() };
-    } catch (err) {
-      return refuse('todos_unreadable', String((err && err.message) || err));
-    }
-  }
-
-  add(title) {
-    const text = typeof title === 'string' ? title.trim() : '';
-    if (!text) return refuse('missing_params', 'a todo needs a non-empty title');
-    if (text.length > MAX_TITLE) {
-      return refuse('title_too_long', `title was ${text.length} characters; the limit is ${MAX_TITLE}`);
-    }
-    try {
-      const todos = this.read();
-      const todo = {
-        id: `t${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
-        title: text,
-        done: false,
-        created_at: new Date().toISOString(),
-      };
-      todos.push(todo);
-      this.write(todos);
-      return { ok: true, todo, todos };
-    } catch (err) {
-      return refuse('todos_unwritable', String((err && err.message) || err));
-    }
-  }
-
-  toggle(id) {
-    try {
-      const todos = this.read();
-      const todo = todos.find((t) => t.id === id);
-      if (!todo) return refuse('not_found', `no todo with id ${id}`);
-      todo.done = !todo.done;
-      todo.completed_at = todo.done ? new Date().toISOString() : null;
-      this.write(todos);
-      return { ok: true, todo, todos };
-    } catch (err) {
-      return refuse('todos_unwritable', String((err && err.message) || err));
-    }
-  }
-
-  remove(id) {
-    try {
-      const todos = this.read();
-      const next = todos.filter((t) => t.id !== id);
-      if (next.length === todos.length) return refuse('not_found', `no todo with id ${id}`);
-      this.write(next);
-      return { ok: true, todos: next };
-    } catch (err) {
-      return refuse('todos_unwritable', String((err && err.message) || err));
-    }
-  }
-
-  clearDone() {
-    try {
-      const todos = this.read();
-      const next = todos.filter((t) => !t.done);
-      this.write(next);
-      return { ok: true, removed: todos.length - next.length, todos: next };
-    } catch (err) {
-      return refuse('todos_unwritable', String((err && err.message) || err));
-    }
+export function list() {
+  try {
+    const rows = db().prepare('SELECT * FROM todos ORDER BY created_at').all();
+    return { ok: true, todos: rows.map(row) };
+  } catch (err) {
+    return refuse('todos_unreadable', String(err?.message || err));
   }
 }
 
-export { TodoStore, DEFAULT_PATH, MAX_TITLE };
+export function add(title) {
+  const text = typeof title === 'string' ? title.trim() : '';
+  if (!text) return refuse('missing_params', 'a todo needs a non-empty title');
+  if (text.length > MAX_TITLE) {
+    return refuse('title_too_long', `title was ${text.length} characters; the limit is ${MAX_TITLE}`);
+  }
+  try {
+    const todo = { id: newId(), title: text, done: 0, created_at: nowIso(), completed_at: null };
+    db().prepare(
+      'INSERT INTO todos (id, title, done, created_at, completed_at) VALUES (?, ?, ?, ?, ?)',
+    ).run(todo.id, todo.title, todo.done, todo.created_at, todo.completed_at);
+    return { ok: true, todo: row(todo), todos: list().todos };
+  } catch (err) {
+    return refuse('todos_unwritable', String(err?.message || err));
+  }
+}
+
+export function toggle(id) {
+  try {
+    const found = db().prepare('SELECT * FROM todos WHERE id = ?').get(id);
+    if (!found) return refuse('not_found', `no todo with id ${id}`);
+    const done = found.done === 1 ? 0 : 1;
+    db().prepare('UPDATE todos SET done = ?, completed_at = ? WHERE id = ?')
+      .run(done, done ? nowIso() : null, id);
+    const after = db().prepare('SELECT * FROM todos WHERE id = ?').get(id);
+    return { ok: true, todo: row(after), todos: list().todos };
+  } catch (err) {
+    return refuse('todos_unwritable', String(err?.message || err));
+  }
+}
+
+export function remove(id) {
+  try {
+    const out = db().prepare('DELETE FROM todos WHERE id = ?').run(id);
+    if (out.changes === 0) return refuse('not_found', `no todo with id ${id}`);
+    return { ok: true, todos: list().todos };
+  } catch (err) {
+    return refuse('todos_unwritable', String(err?.message || err));
+  }
+}
+
+export function clearDone() {
+  try {
+    const out = db().prepare('DELETE FROM todos WHERE done = 1').run();
+    return { ok: true, removed: out.changes, todos: list().todos };
+  } catch (err) {
+    return refuse('todos_unwritable', String(err?.message || err));
+  }
+}

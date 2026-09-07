@@ -2,8 +2,9 @@ node_modules/
 
 # Runtime state, not source. The local ContextFrame fallback
 # (data/contextframes.local.json) IS source and is tracked.
-data/todos.json
-data/todos.json.tmp
+data/todos.sqlite3
+data/todos.sqlite3-wal
+data/todos.sqlite3-shm
 
 .DS_Store
 *.log

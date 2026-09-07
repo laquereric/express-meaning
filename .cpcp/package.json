@@ -2,15 +2,19 @@
   "kind": "cpcp-application",
   "version": 1,
   "name": "express-meaning",
-  "description": "A TODO list read through a ContextFrame. Calls magenticmarket.ai over CPCP for the frame list; serves no CPCP seam of its own.",
+  "description": "A TODO list read through a ContextFrame. One image, three roles: BACK serves a todo seam over CPCP, FRONT renders it, BACKJOB reaps receipts. Calls magenticmarket.ai for the frame list.",
   "role": {
-    "name": "FRONT",
-    "of": "magenticmarket.ai",
-    "definition": "The surface users see, and a bounded view onto what BACK holds. Serves no seam.",
+    "name": "BACK",
+    "of": "express-meaning",
+    "definition": "Context / Memory / the /_cpcp contract seam. Authoritative, synchronous.",
     "source": "coordination-protocol-contract-package spec/roles.md at dc023bbb649eae0072f8c50886c175e4701b28f2",
-    "reified_how": "This role in Node, against a BACK it does not deploy: it reads ContextFrames from the seam and renders them beside the user's own input, which is the bounded view.",
-    "not_a_pod_member": "Reified OUTSIDE the unit's pod: it reaches the BACK over the internet at services scope, not across a pod network. That is why its calling manifest is 'dependency' and not 'pod_internal_dependencies' -- same role, different reach.",
-    "second_reification": "This unit's other FRONT is cpcp/front/app.py inside magentic-market-ai-site, a pod member. One role, two reifications."
+    "also_reified": {
+      "FRONT": "ROLE=front -- the browser surface. Holds no database and imports no store; every todo, read or write, is a CPCP call to BACK.",
+      "BackJob": "ROLE=backjob -- no ingress. Reaps idempotency receipts past their TTL."
+    },
+    "separate_containers": true,
+    "separation_evidence": "One image, three processes, distinguished by the ROLE environment variable (server.js). FRONT builds a different Express app from BACK -- it mounts no /_cpcp route and imports src/todos.js not at all, so co-location is not merely avoided by deployment but unavailable in code. BACKJOB listens on nothing.",
+    "was": "FRONT only, until 2026-09-07. It called magenticmarket.ai and kept todos in a JSON file that its own web process wrote directly."
   },
   "contract": {
     "repo": "https://github.com/laquereric/coordination-protocol-contract-package",
@@ -20,17 +24,19 @@
   "scopes": {
     "source": "spec/scopes.md",
     "definitions": "coordination-protocol-contract-package .cpcp/services/package.json#scope_definitions at dc023bbb649eae0072f8c50886c175e4701b28f2",
+    "note": "It calls beyond the pod (the frame list) and serves within it (the todo seam). No 'services' manifest: BACK publishes no port, so nothing it serves is reachable beyond the pod -- FRONT's browser surface is HTML and a private JSON API, not a CPCP seam.",
     "manifests": {
-      "dependency": ".cpcp/dependency/package.json"
-    },
-    "note": "One manifest, and it is a calling one. This repo serves no CPCP seam at any scope and joins no pod network, so the other three scopes get no directory -- a directory asserts a relation, and three empty ones would assert three that do not hold."
+      "dependency": ".cpcp/dependency/package.json",
+      "pod_internal_services": ".cpcp/pod_internal_services/package.json"
+    }
   },
   "not_a_seam": {
     "public/": "A browser UI. Static files, no RPC.",
-    "/api/todos, /api/contextframes, /api/prompt": "This app's own HTTP API, called only by its own page. It answers the never-raise envelope shape by choice -- one failure path for the client to learn -- but it is not JSON-RPC-LD, draws no /_cpcp route, publishes no CID, and nothing outside this repo calls it. Answering {ok, reason, because} does not make a surface a CPCP seam.",
-    "the LLM": "There is none. The app holds no key, names no model, and makes no outbound request on the prompt path; a person carries the prompt to Chrome AI Mode by hand. The only network call this app makes is the CPCP one declared under dependency."
+    "FRONT's /api/* routes": "Browser HTTP, not JSON-RPC-LD: no /_cpcp route, no CID, and only this app's own page calls them. They are now THIN PROXIES -- each one makes a CPCP call to BACK and returns what it gets. That is the change: the same URLs a browser always used now cross a governed boundary, and the browser did not have to learn anything.",
+    "the LLM": "There is none. The app holds no key and makes no outbound request on the prompt path; a person carries the prompt to Chrome AI Mode by hand."
   },
   "gates": {
-    ".github/workflows/test.yml": "Runs the suite offline, then boots the app against a dead CPCP_ORIGIN and asserts the fallback is labelled local -- that a frame served from disk is never presented as one served by the seam."
+    ".github/workflows/test.yml": "Runs the suite offline, then boots the app against a dead CPCP_ORIGIN and asserts the fallback is labelled local -- that a frame served from disk is never presented as one served by the seam.",
+    "tests/seam.test.js": "The properties the split buys: a PUSH refused without an operationId before it happens, a retry that replays rather than repeats, a refused PUSH leaving no receipt so a corrected retry can proceed, and a toggle idempotent by intent rather than by state."
   }
 }

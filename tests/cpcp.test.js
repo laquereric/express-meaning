@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert';
 import http from 'node:http';
 
-import * as cpcp from '../src/cpcp.js';
+import * as cpcp from '../src/cpcp/front/client.js';
 
 /** Stand up a throwaway seam that answers exactly what a case needs. */
 function seam(handler) {

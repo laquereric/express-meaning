@@ -1,18 +1,21 @@
 {
   "name": "express-meaning",
   "version": "0.1.0",
-  "description": "A TODO list read through a ContextFrame from magenticmarket.ai over CPCP, composed into a prompt for Chrome AI Mode.",
+  "description": "A TODO list read through a ContextFrame. One image, three roles: BACK serves a todo seam over CPCP, FRONT renders it, BACKJOB reaps receipts.",
   "type": "module",
   "license": "Apache-2.0",
   "private": true,
   "main": "server.js",
   "engines": {
-    "node": ">=20.11"
+    "node": ">=22.5"
   },
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js",
-    "test": "node --test tests/cpcp.test.js tests/contextframes.test.js tests/prompt.test.js tests/todos.test.js"
+    "start": "ROLE=back node server.js",
+    "start:back": "ROLE=back node server.js",
+    "start:front": "ROLE=front node server.js",
+    "start:backjob": "ROLE=backjob node server.js",
+    "dev": "ROLE=back node --watch server.js",
+    "test": "node --test tests/cpcp.test.js tests/contextframes.test.js tests/prompt.test.js tests/todos.test.js tests/seam.test.js tests/seam-generic.test.js tests/backjob.test.js"
   },
   "dependencies": {
     "express": "^5.1.0"

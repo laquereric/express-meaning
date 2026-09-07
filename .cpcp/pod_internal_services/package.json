@@ -1,0 +1,38 @@
+{
+  "kind": "cpcp-scope",
+  "scope": "pod_internal_services",
+  "of": "express-meaning",
+  "definition": "Served to containers beside this one; pod-network traffic, ports unpublished.",
+  "source": "coordination-protocol-contract-package .cpcp/services/package.json#scope_definitions at dc023bbb649eae0072f8c50886c175e4701b28f2",
+  "seams": [
+    {
+      "id": "todo",
+      "scope": "pod_internal_services",
+      "routes": [
+        "POST /_cpcp/rpc",
+        "GET /_cpcp/cid.json",
+        "GET /_cpcp/up"
+      ],
+      "served_by": "server.js (ROLE=back) + src/seam.js",
+      "methods": [
+        "todo.list",
+        "todo.create",
+        "todo.toggle",
+        "todo.remove",
+        "todo.clearDone"
+      ],
+      "callers": "FRONT (ROLE=front), across the pod network. No other caller is declared.",
+      "note": "todo.list is PULL. The four mutations are PUSH and require an operationId; receipts live in the same SQLite database as the todos, because a receipt that outlives its process but not its database lies after a restore."
+    }
+  ],
+  "exposure": {
+    "measured": true,
+    "evidence": "Measured 2026-09-07 from server.js: BACK binds HOST (default 127.0.0.1) and nothing in this repo publishes a container port. The seam is reached by FRONT at BACK_CPCP_ORIGIN, which defaults to loopback.",
+    "note": "This block proves a negative -- that the seam adds no publication of its own. Rule 4 wants that measured like any other claim."
+  },
+  "invariants": [
+    "FRONT cannot write a todo except through this seam: it imports no store and opens no database, so bypassing is not a discipline but an impossibility.",
+    "A retry of the same operationId is the same write. The receipt is the record of that, and it is durable because it shares the database with the state it protects.",
+    "A refused PUSH writes no receipt, so correcting the input and retrying the same intent proceeds rather than replaying the refusal."
+  ]
+}

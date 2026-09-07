@@ -36,7 +36,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import * as cpcp from './cpcp.js';
+import * as cpcp from './cpcp/front/client.js';
 
 const FRAME_METHOD = 'contextframe.list';
 const DEFAULT_ORIGIN = 'https://magenticmarket.ai/_cpcp';
