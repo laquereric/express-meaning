@@ -6,7 +6,8 @@ A traditional TODO list, and one **ContextFrame** to read it through — sliced
 into the three roles a CPCP unit deploys as.
 
 Express 5, vanilla JavaScript, no build step. One runtime dependency; SQLite
-comes from `node:sqlite`, which is built in.
+comes from `node:sqlite`, which is built in — **Node 24+**, where it is
+available unflagged.
 
 ```bash
 npm install

@@ -7,7 +7,7 @@
   "private": true,
   "main": "server.js",
   "engines": {
-    "node": ">=22.5"
+    "node": ">=24"
   },
   "scripts": {
     "start": "ROLE=back node server.js",

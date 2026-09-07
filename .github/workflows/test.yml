@@ -10,10 +10,12 @@
 #         ContextFrame list rather than fail or, worse, present local data
 #         as upstream.
 #
-# The matrix pins the floor declared in package.json engines (>=22.5, the Node
-# that has node:sqlite) alongside current LTS, so the floor is verified rather
-# than asserted. It moved from 20.11 when todos went to SQLite -- a declared
-# floor nobody runs is a guess, and this one would have been wrong for a day.
+# The matrix pins the floor declared in package.json engines alongside current
+# LTS, so the floor is VERIFIED rather than asserted. It has now been wrong
+# twice and been caught twice: 20.11 predated node:sqlite entirely, and 22.5
+# has it only behind --experimental-sqlite (CI: "No such built-in module:
+# node:sqlite"). >=24 is where it is available unflagged. A declared floor
+# nobody runs is a guess, and this one guessed wrong on the first two tries.
 name: gate-tests
 on:
   push: { branches: [ main ] }
@@ -26,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: [ '22.5', 'lts/*' ]
+        node: [ '24', 'lts/*' ]
     name: node ${{ matrix.node }}
     steps:
       - uses: actions/checkout@v4
