@@ -3,14 +3,27 @@
   "version": 1,
   "name": "express-meaning",
   "description": "A TODO list read through a ContextFrame. Calls magenticmarket.ai over CPCP for the frame list; serves no CPCP seam of its own.",
+  "role": {
+    "name": "FRONT",
+    "of": "the four-role CPCP unit whose BACK is https://magenticmarket.ai/_cpcp",
+    "defined_by": {
+      "repo": "https://github.com/laquereric/magentic-stack",
+      "rev": "918227713fb1929dbd48836a0b47dc3390e7e9d9",
+      "doc": "docs/architecture/OVERVIEW.md"
+    },
+    "definition": "UI + a bounded view. The only surface users see.",
+    "reified_how": "This repo is that role in Node, against a BACK it does not deploy: it reads ContextFrames from the seam and renders them beside the user's own input, which is the bounded view.",
+    "not_a_pod_member": "The roles are a deployment convention, and this one is reified OUTSIDE the unit's pod: it reaches the BACK over the internet at services scope, not across a pod network. That is why its calling manifest is 'dependency' and not 'pod_internal_dependencies' -- same role, different reach.",
+    "layering": "Roles are magentic-stack's vocabulary, not CPCP's. The contract spec names only callers and seams and defines no FRONT or BACK; a reader of this manifest needs both, so both are cited."
+  },
   "contract": {
     "repo": "https://github.com/laquereric/coordination-protocol-contract-package",
-    "rev": "010cf90965690aa8d285addde3eaf155d6114480",
+    "rev": "32aaae80b27cfa15824a49b1f6faa2bf8d0192cb",
     "note": "The revision whose scope vocabulary this repo's manifests cite. Full SHA per repo-format rule 5."
   },
   "scopes": {
     "source": "spec/scopes.md",
-    "definitions": "coordination-protocol-contract-package .cpcp/services/package.json#scope_definitions at 010cf90965690aa8d285addde3eaf155d6114480",
+    "definitions": "coordination-protocol-contract-package .cpcp/services/package.json#scope_definitions at 32aaae80b27cfa15824a49b1f6faa2bf8d0192cb",
     "manifests": {
       "dependency": ".cpcp/dependency/package.json"
     },

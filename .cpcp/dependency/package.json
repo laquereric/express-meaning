@@ -3,7 +3,7 @@
   "scope": "dependency",
   "of": "express-meaning",
   "definition": "A CID this repo calls, served elsewhere. Entries are not seams of this repo; the producer is somebody else's services scope.",
-  "source": "coordination-protocol-contract-package .cpcp/services/package.json#scope_definitions at 010cf90965690aa8d285addde3eaf155d6114480",
+  "source": "coordination-protocol-contract-package .cpcp/services/package.json#scope_definitions at 32aaae80b27cfa15824a49b1f6faa2bf8d0192cb",
   "depends_on": [
     {
       "producer": "https://magenticmarket.ai/_cpcp",
