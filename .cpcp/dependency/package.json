@@ -11,18 +11,19 @@
       "operations": [
         "contextframe.list"
       ],
-      "status": "unbuilt",
-      "because": "Re-measured 2026-09-07 against the live seam: GET /_cpcp/cid.json publishes build.list, build.get and build.create, and POST /_cpcp/rpc with contextframe.list still answers unknown_operation. The producer has MERGED the operation (magentic-market-ai-site config/initializers/rails_cpcp.rb + app/models/context_frame.rb) but not deployed it, and status records what the seam answers rather than what its source contains. This flips to published on the next deploy of that site, with no code change here -- verified by serving the producer's exact output from a local seam and watching provenance become 'upstream'.",
+      "status": "published",
+      "because": "Measured 2026-09-07 against the live seam AFTER the producer deployed it: GET https://magenticmarket.ai/_cpcp/cid.json publishes build.list, build.get, build.create AND contextframe.list, and calling it returns three ContextFrames (MM1 Evidence, MM2 Obligation, MM3 Reversibility) with ten Meanings and four nested Clarifications. This entry read 'unbuilt' from the day it was written until that deploy; the flip is a data change here and nothing else -- no line of this repo changed to consume it.",
       "shape": "https://w3id.org/cpcp/osi8/contextframe#ContextFrame",
       "shape_source": "magentic-stack gems/shapes-level-8/bundles/contextframe.shacl.ttl -- containment: a Meaning sits under a ContextFrame, a Clarification under a Meaning",
       "expects": "A collection of ContextFrame, each with a canonicalId and title, Meanings nested under it and Clarifications nested under those. The client reads cf: prefixed and bare property names, and refuses a frame without a canonicalId rather than synthesising one.",
       "on_refusal": "Falls back to data/contextframes.local.json and labels it local -- in the API response, in a banner, and in the footer of every generated prompt. Nothing local is ever presented as upstream.",
       "caller": "src/contextframes.js",
-      "verified_by": "tests/contextframes.test.js -- one test stands up a seam that DOES publish contextframe.list and asserts provenance flips to upstream, so the day this status becomes published is a data change here, not a code change.",
+      "verified_by": "tests/contextframes.test.js stands up a seam that publishes contextframe.list and asserts provenance flips to upstream. That test predicted this: pointing an unmodified FRONT at the live seam now reports source=upstream and the prompt footer reads 'served by https://magenticmarket.ai/_cpcp via contextframe.list'.",
       "producer_status": {
         "merged": true,
-        "deployed": false,
-        "frames_when_deployed": [
+        "deployed": true,
+        "deployed_at": "2026-09-07",
+        "frames": [
           "MM1 Evidence",
           "MM2 Obligation",
           "MM3 Reversibility"
