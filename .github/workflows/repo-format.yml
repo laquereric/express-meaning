@@ -1,0 +1,42 @@
+# Gate - this repo conforms to the CPCP repo format.
+#
+# The checker lives in the contract home, and this pulls it at THE REVISION THIS
+# REPO'S MANIFEST CLAIMS -- read from .cpcp/package.json contract.rev, not from
+# main. Two reasons. A repo conforms to the contract it pinned, so testing it
+# against a newer one would fail it for rules it never adopted; and pinning the
+# gate to the manifest makes adopting new rules a deliberate act (bump the rev,
+# watch CI) instead of something that happens to you on somebody else's push.
+#
+# Rule 5 is why the rev is a full SHA: an abbreviation is not an object a reader
+# -- or a checkout -- can resolve unambiguously.
+name: gate-repo-format
+on:
+  push: { branches: [ main ] }
+  pull_request:
+  workflow_call:
+
+jobs:
+  repo-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+
+      - name: Read the contract revision this repo pins
+        id: pin
+        run: |
+          set -euo pipefail
+          rev=$(python3 -c "import json; print(json.load(open('.cpcp/package.json'))['contract']['rev'])")
+          echo "pinned contract: $rev"
+          echo "rev=$rev" >> "$GITHUB_OUTPUT"
+
+      - name: Fetch the checker at that revision
+        uses: actions/checkout@v4
+        with:
+          repository: laquereric/coordination-protocol-contract-package
+          ref: ${{ steps.pin.outputs.rev }}
+          path: .cpcp-contract
+
+      - name: This repo conforms to the format it pinned
+        run: python3 .cpcp-contract/tooling/check-repo-format.py .
