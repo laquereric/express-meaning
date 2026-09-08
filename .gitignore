@@ -6,5 +6,8 @@ data/todos.sqlite3
 data/todos.sqlite3-wal
 data/todos.sqlite3-shm
 
+# One contributor's editor and one contributor's OS. Neither is this repo's
+# business, and neither should arrive in a diff.
+.idea/
 .DS_Store
 *.log
