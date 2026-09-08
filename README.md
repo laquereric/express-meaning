@@ -9,6 +9,13 @@ Express 5, vanilla JavaScript, no build step. One runtime dependency; SQLite
 comes from `node:sqlite`, which is built in — **Node 24+**, where it is
 available unflagged.
 
+![FRONT: the todo list on the left, ContextFrames from the seam on the right,
+with a banner reading "From the seam"](docs/screenshots/front.png)
+
+*FRONT on `:3201`. The todos crossed a process boundary to get there; the frames
+came from magenticmarket.ai. Neither fact is inferable from the markup, which is
+why the banner states one of them.*
+
 ```bash
 npm install
 npm test                 # 57 tests, no network required
@@ -123,31 +130,53 @@ POST https://magenticmarket.ai/_cpcp/rpc          → {"method": "contextframe.l
 **The CID is the contract.** This app reads it *before* calling, so it knows
 what the seam offers rather than inferring it from a failed call.
 
-### Status today: the affordance is coming, not yet published
+### Status today: published, and the switch cost nothing
 
-The seam is real and live, but its CID publishes exactly three operations —
-`build.list`, `build.get`, `build.create`. GAP107 records the frame as *"not a
-CPCP operation yet (no wrap)"*, and calling it returns a genuine refusal:
+`contextframe.list` is live. The CID at magenticmarket.ai — *"MagenticMarketAiSite
+CPCP projection"* — now publishes four operations:
 
 ```json
-{"ok": false, "error": {"reason": "unknown_operation",
-                        "because": "no CPCP operation \"contextframe.list\""}}
+["build.list", "build.get", "build.create", "contextframe.list"]
 ```
 
-So until the CID names it, frames come from `data/contextframes.local.json`, and
-the app **says so** — in the API response, in a banner above the list, and in the
-footer of every generated prompt:
+GAP107 recorded the frame as *"not a CPCP operation yet (no wrap)"*; the wrap
+landed. Frames arrive from the seam as `MM1` Evidence, `MM2` Obligation, `MM3`
+Reversibility, and the footer of every generated prompt says where they came
+from:
+
+> ContextFrame MM1 "Evidence" served by https://magenticmarket.ai/_cpcp via
+> contextframe.list.
+
+**Not one line changed to make that happen.** The switch is driven by the CID:
+this app asked what the seam published, the answer grew an operation, and the
+upstream path it had been carrying all along started running. The test that
+stood up a fake seam publishing `contextframe.list` was proving the real thing,
+not describing a plan.
+
+### The local file is still there, as a fallback
+
+`data/contextframes.local.json` is not dead code — it answers whenever the seam
+cannot. Unreachable, refusing, publishing nothing, or answering a shape this
+client does not recognize: each falls back, and each records *why* in
+`provenance.upstream_refusal`. Tests cover all four.
+
+When it answers, the app **says so** — in the API response, in a banner above
+the list, and in the prompt footer:
 
 > ContextFrame F1 "Shipping" served locally by express-meaning —
 > https://magenticmarket.ai/_cpcp does not publish contextframe.list yet.
 
-Nothing local is ever presented as upstream. **No code changes on the day the
-seam publishes** — the switch is driven by the CID, and a test stands up a fake
-seam that *does* publish `contextframe.list` to prove the upstream path works
-rather than merely asserting it will.
+![The same UI with an amber "Local fallback" banner, frames F1 to F4, and a
+disclosure reading "upstream said: unreachable"](docs/screenshots/frames-local-fallback.png)
 
-The local set uses its own `canonicalId` series (`F1`–`F4`) rather than
-borrowing the board's external `Y1`/`Y2`/`Y3`.
+*The same app, pointed at a seam that will not answer. Amber rather than green,
+`F1`–`F4` rather than `MM1`–`MM3`, and the refusal is on screen rather than in a
+log — `upstream said: unreachable`.*
+
+Nothing local is ever presented as upstream; a test greps the label to keep it
+that way. The local set keeps its own `canonicalId` series (`F1`–`F4`), distinct
+from both the board's external `Y1`/`Y2`/`Y3` and the seam's `MM1`–`MM3`, so the
+two sets can never be confused for one another.
 
 ## Envelopes: failure is data
 
@@ -179,6 +208,13 @@ magenticmarket.ai, because a seam is a seam:
 Pick a frame, press **Compose prompt**, and the modal shows the full text with a
 **Copy** button and a link to Chrome AI Mode.
 
+![The prompt modal: the composed text through frame MM1, with a Copy button and
+an Open Chrome AI Mode link](docs/screenshots/compose-prompt.png)
+
+*Composed through `MM1` Evidence. The machine-proposed Meaning is labelled
+**inside the prompt text** — "Machine-proposed and NOT accepted" — not merely
+styled differently in a UI the reader will never see.*
+
 **This app calls no model.** It holds no API key, names no model, and makes no
 outbound request on that path — you carry the prompt across by pasting it. The
 seam this app demonstrates is the one to magenticmarket.ai, not one to a model
@@ -201,6 +237,7 @@ src/contextframes.js             CID discovery, coercion, provenance, fallback
 src/prompt.js                    Input + Frame -> Translation
 public/                          vanilla JS, no framework, no build
 tests/                           57 tests, all offline
+docs/screenshots/                the three states this README shows
 ```
 
 **`src/cpcp/` is generic on purpose.** The seam knows nothing about todos:

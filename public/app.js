@@ -134,9 +134,10 @@ el.clearDone.addEventListener('click', () => act('/api/todos/clear-done', { meth
 
 // --------------------------------------------------------- contextframes
 
-// Provenance is shown, never implied. If the frames came from a local
-// file because the seam does not publish the operation yet, the banner
-// says which operation, what the CID does publish, and why.
+// Provenance is shown, never implied. The seam publishes
+// contextframe.list, so the banner normally reads "From the seam". When
+// it cannot answer and the local file stands in, the banner says which
+// operation, what the CID does publish, and why the seam refused.
 function renderProvenance(p) {
   el.provenance.replaceChildren();
   el.provenance.className = `provenance ${p.source === 'upstream' ? 'upstream' : 'local'}`;

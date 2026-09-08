@@ -26,13 +26,19 @@
 //      attach the frame to anything. So selecting a frame here mutates
 //      no todo. Nothing is written back.
 //
-// Upstream status: magenticmarket.ai's CID publishes build.list /
-// build.get / build.create today, and GAP107 records the frame as
-// "not a CPCP operation yet (no wrap)". The affordance is coming. Until
-// the CID names it, this module falls back to a local file and says so
-// -- in the API response, in the UI, and inside the generated prompt.
-// Nothing local is ever presented as upstream, and no code changes on
-// the day the seam publishes.
+// Upstream status: magenticmarket.ai's CID publishes contextframe.list,
+// alongside build.list / build.get / build.create. GAP107 had recorded
+// the frame as "not a CPCP operation yet (no wrap)"; the wrap landed,
+// and this module started reading the seam without a line changing --
+// the switch is driven by the CID, which is the whole point of asking
+// what a seam publishes instead of inferring it from a failed call.
+//
+// The local file remains the fallback, not dead code. It answers when
+// the seam cannot: unreachable, refusing, publishing no frame, or
+// answering a shape this module does not recognize. Each of those
+// records its reason in provenance.upstream_refusal, and each is said
+// out loud -- in the API response, in the UI, and inside the generated
+// prompt. Nothing local is ever presented as upstream.
 
 import fs from 'node:fs';
 import path from 'node:path';
